@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class SupabaseService {
@@ -74,7 +76,7 @@ public class SupabaseService {
     
     // Construir la solicitud DELETE usando directamente la URL del archivo
     Request request = new Request.Builder()
-      .url(fileUrl)
+      .url(apiUrl)
       .addHeader("Authorization", "Bearer " + supabaseApiKey)
       .addHeader("apikey", supabaseApiKey)
       .delete()
@@ -83,7 +85,7 @@ public class SupabaseService {
     // Ejecutar la solicitud y manejar la respuesta
     try (Response response = client.newCall(request).execute()) {
       if (response.isSuccessful()) {
-        System.out.println("Imagen eliminada exitosamente: " + fileUrl);
+        System.out.println("Imagen eliminada exitosamente: " + apiUrl);
       } else {
         throw new IOException("Error eliminando imagen: " + response.body().string());
       }

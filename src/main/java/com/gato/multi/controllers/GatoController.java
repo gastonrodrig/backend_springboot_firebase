@@ -2,6 +2,7 @@ package com.gato.multi.controllers;
 
 import com.gato.multi.dtos.Gato.GatoCreateDto;
 import com.gato.multi.dtos.Gato.GatoMultipartRequest;
+import com.gato.multi.dtos.Gato.GatoUpdateDto;
 import com.gato.multi.models.Gato;
 import com.gato.multi.services.GatoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,7 +47,9 @@ public class GatoController {
     )
   )
   @PostMapping(consumes = {"multipart/form-data"})
-  public ResponseEntity<Gato> create(@ModelAttribute GatoMultipartRequest request) {
+  public ResponseEntity<Gato> create(
+    @ModelAttribute GatoMultipartRequest request
+  ) {
     GatoCreateDto gatoDto = new GatoCreateDto();
     gatoDto.setNombre(request.getNombre());
     gatoDto.setTamanio(request.getTamanio());
@@ -55,10 +58,27 @@ public class GatoController {
     return ResponseEntity.ok(gatoService.create(gatoDto, request.getFile()));
   }
   
-  @Operation(summary = "Actualiza un gato")
-  @PutMapping("/{id}")
-  public ResponseEntity<Gato> update(@PathVariable("id") String id, @RequestBody GatoCreateDto dto) {
-    return ResponseEntity.ok(gatoService.update(id, dto));
+  @Operation(
+    summary = "Actualiza un gato con datos e imagen",
+    requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+      required = true,
+      content = @Content(
+        mediaType = "multipart/form-data",
+        schema = @Schema(implementation = GatoMultipartRequest.class)
+      )
+    )
+  )
+  @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
+  public ResponseEntity<Gato> update(
+    @PathVariable("id") String id,
+    @ModelAttribute GatoMultipartRequest request
+  ) {
+    GatoUpdateDto gatoDto = new GatoUpdateDto();
+    gatoDto.setNombre(request.getNombre());
+    gatoDto.setTamanio(request.getTamanio());
+    gatoDto.setPropietario_id(request.getPropietarioId());
+    
+    return ResponseEntity.ok(gatoService.update(id, gatoDto, request.getFile()));
   }
   
   @DeleteMapping("/{id}")

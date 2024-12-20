@@ -9,12 +9,15 @@ public class Multimedia {
   @Id
   @JsonProperty("_id")
   private String id;
+  
   private String nombre;
+  
   private String tipo;
+  
   private String url;
   
-  public Multimedia() {
-  }
+  // Constructores
+  public Multimedia() {}
   
   public Multimedia(String nombre, String tipo, String url) {
     this.nombre = nombre;
@@ -22,6 +25,7 @@ public class Multimedia {
     this.url = url;
   }
   
+  // Getters y Setters
   public String getId() {
     return id;
   }

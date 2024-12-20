@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class GatoService {
@@ -39,8 +40,7 @@ public class GatoService {
     String imageUrl = null;
     if (file != null && !file.isEmpty()) {
       try {
-        // Usar SupabaseService para subir la imagen directamente desde MultipartFile
-        imageUrl = supabaseService.uploadImage(file);
+        imageUrl = supabaseService.uploadImage("Gato", file);
       } catch (IOException e) {
         throw new RuntimeException("Error subiendo la imagen a Supabase: " + e.getMessage(), e);
       }
@@ -97,12 +97,28 @@ public class GatoService {
   }
   
   // Eliminar un gato
-  public Gato delete(String id) {
+  public boolean delete(String id) {
+    // Buscar el gato por ID
     Gato gato = gatoRepository.findById(id)
       .orElseThrow(() -> new ResponseStatusException(
         HttpStatus.NOT_FOUND, "Gato no encontrado con ID: " + id));
     
-    gatoRepository.delete(gato);
-    return gato;
+    // Si el gato tiene multimedia, se elimina
+    if (gato.getMultimedia() != null && gato.getMultimedia().getUrl() != null) {
+      try {
+        String multimediaUrl = gato.getMultimedia().getUrl();
+        System.out.println(multimediaUrl);
+        supabaseService.deleteImage(multimediaUrl); // Elimina de Supabase
+        multimediaRepository.deleteById(gato.getMultimedia().getId()); // Elimina de MongoDB
+      } catch (IOException e) {
+        throw new RuntimeException("Error eliminando multimedia asociada: " + e.getMessage());
+      }
+    }
+    
+    // Eliminar el gato
+    gatoRepository.deleteById(id);
+    
+    // Retornar respuesta de éxito
+    return true;
   }
 }

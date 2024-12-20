@@ -12,6 +12,7 @@ public class Gato {
   private String id;
   
   private String nombre;
+  
   private String tamano;
   
   @DBRef

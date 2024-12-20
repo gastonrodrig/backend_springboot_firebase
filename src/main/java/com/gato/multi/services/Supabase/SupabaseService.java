@@ -21,7 +21,7 @@ public class SupabaseService {
   
   private final OkHttpClient client = new OkHttpClient();
   
-  public String uploadImage(MultipartFile file) throws IOException {
+  public String uploadImage(String locacion, MultipartFile file) throws IOException {
     // Verificar si el archivo tiene un nombre válido
     String originalFileName = file.getOriginalFilename();
     if (originalFileName == null || originalFileName.isEmpty()) {
@@ -45,7 +45,7 @@ public class SupabaseService {
     String uniqueFileName = sanitizedFileName + "_" + randomSuffix + fileExtension;
     
     // Construir la URL para subir el archivo
-    String fullUrl = supabaseUrl + "/storage/v1/object/" + bucketName + "/" + uniqueFileName;
+    String fullUrl = supabaseUrl + "/storage/v1/object/" + bucketName + "/" + locacion + "/" + uniqueFileName;
     
     RequestBody body = RequestBody.create(file.getBytes(), MediaType.parse(file.getContentType()));
     
@@ -58,12 +58,34 @@ public class SupabaseService {
     
     try (Response response = client.newCall(request).execute()) {
       if (response.isSuccessful()) {
-        String publicUrl = supabaseUrl + "/storage/v1/object/public/" + bucketName + "/" + uniqueFileName;
+        String publicUrl = supabaseUrl + "/storage/v1/object/public/" + bucketName + "/" + locacion + "/" + uniqueFileName;
         System.out.println("Imagen subida exitosamente: " + publicUrl);
         return publicUrl;
       } else {
         System.err.println("Error al subir imagen. Respuesta: " + response.body().string());
         throw new IOException("Error subiendo imagen: " + response.body().string());
+      }
+    }
+  }
+  
+  public void deleteImage(String fileUrl) throws IOException {
+    // Transformar la URL pública a la URL de la API
+    String apiUrl = fileUrl.replace("/public/", "/");
+    
+    // Construir la solicitud DELETE usando directamente la URL del archivo
+    Request request = new Request.Builder()
+      .url(fileUrl)
+      .addHeader("Authorization", "Bearer " + supabaseApiKey)
+      .addHeader("apikey", supabaseApiKey)
+      .delete()
+      .build();
+    
+    // Ejecutar la solicitud y manejar la respuesta
+    try (Response response = client.newCall(request).execute()) {
+      if (response.isSuccessful()) {
+        System.out.println("Imagen eliminada exitosamente: " + fileUrl);
+      } else {
+        throw new IOException("Error eliminando imagen: " + response.body().string());
       }
     }
   }

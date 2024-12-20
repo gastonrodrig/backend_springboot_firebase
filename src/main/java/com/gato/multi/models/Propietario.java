@@ -11,8 +11,11 @@ public class Propietario {
   private String id;
   
   private String nombre;
+  
   private String telefono;
+  
   private String email;
+  
   private String direccion;
   
   // Constructores

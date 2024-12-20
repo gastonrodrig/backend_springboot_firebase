@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @Tag(name = "Gatos")
@@ -60,9 +61,10 @@ public class GatoController {
     return ResponseEntity.ok(gatoService.update(id, dto));
   }
   
-  @Operation(summary = "Elimina un gato")
   @DeleteMapping("/{id}")
-  public ResponseEntity<Gato> delete(@PathVariable("id") String id) {
-    return ResponseEntity.ok(gatoService.delete(id));
+  @Operation(summary = "Elimina un gato por su ID")
+  public ResponseEntity<Map<String, Boolean>> delete(@PathVariable("id") String id) {
+    boolean success = gatoService.delete(id);
+    return ResponseEntity.ok(Map.of("success", success));
   }
 }

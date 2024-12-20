@@ -12,8 +12,8 @@ public class SwaggerConfig {
   public OpenAPI customOpenAPI() {
     return new OpenAPI()
       .info(new Info()
-        .title("BN API")
+        .title("CLASE 01 API")
         .version("1.0")
-        .description("API documentation for BN management"));
+        .description("API documentation for CLASE 01"));
   }
 }

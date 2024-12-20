@@ -1,4 +1,4 @@
-package com.gato.multi.services;
+package com.gato.multi.services.Supabase;
 
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,13 +22,30 @@ public class SupabaseService {
   private final OkHttpClient client = new OkHttpClient();
   
   public String uploadImage(MultipartFile file) throws IOException {
-    String fileName = file.getOriginalFilename();
-    if (fileName == null || fileName.isEmpty()) {
+    // Verificar si el archivo tiene un nombre válido
+    String originalFileName = file.getOriginalFilename();
+    if (originalFileName == null || originalFileName.isEmpty()) {
       throw new RuntimeException("El archivo no tiene un nombre válido.");
     }
     
-    String fullUrl = supabaseUrl + "/storage/v1/object/prueba/" + fileName;
-    System.out.println("URL generada: " + fullUrl);
+    // Quitar espacios en blanco del nombre del archivo
+    String sanitizedFileName = originalFileName.replaceAll("[^a-zA-Z0-9._-]", "");
+    
+    // Generar un número aleatorio de 8 dígitos
+    int randomSuffix = (int) (Math.random() * 1_0000_0000);
+    
+    // Construir el nuevo nombre del archivo con el sufijo aleatorio
+    String fileExtension = "";
+    int dotIndex = sanitizedFileName.lastIndexOf(".");
+    if (dotIndex != -1) {
+      fileExtension = sanitizedFileName.substring(dotIndex);
+      sanitizedFileName = sanitizedFileName.substring(0, dotIndex);
+    }
+    
+    String uniqueFileName = sanitizedFileName + "_" + randomSuffix + fileExtension;
+    
+    // Construir la URL para subir el archivo
+    String fullUrl = supabaseUrl + "/storage/v1/object/" + bucketName + "/" + uniqueFileName;
     
     RequestBody body = RequestBody.create(file.getBytes(), MediaType.parse(file.getContentType()));
     
@@ -41,7 +58,7 @@ public class SupabaseService {
     
     try (Response response = client.newCall(request).execute()) {
       if (response.isSuccessful()) {
-        String publicUrl = supabaseUrl + "/storage/v1/object/public/" + bucketName + "/" + fileName;
+        String publicUrl = supabaseUrl + "/storage/v1/object/public/" + bucketName + "/" + uniqueFileName;
         System.out.println("Imagen subida exitosamente: " + publicUrl);
         return publicUrl;
       } else {

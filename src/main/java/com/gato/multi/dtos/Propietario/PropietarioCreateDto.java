@@ -3,7 +3,7 @@ package com.gato.multi.dtos.Propietario;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-public class PropietarioCreateDTO {
+public class PropietarioCreateDto {
   @NotBlank
   private String nombre;
   

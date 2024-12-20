@@ -3,7 +3,7 @@ package com.gato.multi.dtos.Gato;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 
-public class GatoCreateDTO {
+public class GatoCreateDto {
   @NotBlank
   private String nombre;
   

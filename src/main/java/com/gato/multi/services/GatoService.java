@@ -1,19 +1,19 @@
 package com.gato.multi.services;
 
-import com.gato.multi.dtos.Gato.GatoCreateDTO;
+import com.gato.multi.dtos.Gato.GatoCreateDto;
 import com.gato.multi.models.Gato;
 import com.gato.multi.models.Multimedia;
 import com.gato.multi.models.Propietario;
 import com.gato.multi.repositories.GatoRepository;
 import com.gato.multi.repositories.MultimediaRepository;
 import com.gato.multi.repositories.PropietarioRepository;
+import com.gato.multi.services.Supabase.SupabaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class GatoService {
   @Autowired
   private SupabaseService supabaseService;
   
-  public Gato create(GatoCreateDTO dto, MultipartFile file) {
+  public Gato create(GatoCreateDto dto, MultipartFile file) {
     // Validar propietario
     Propietario propietario = propietarioRepository.findById(dto.getPropietario_id())
       .orElseThrow(() -> new ResponseStatusException(
@@ -76,7 +76,7 @@ public class GatoService {
   }
   
   // Actualizar un gato
-  public Gato update(String id, GatoCreateDTO dto) {
+  public Gato update(String id, GatoCreateDto dto) {
     // Buscar el gato existente
     Gato gato = gatoRepository.findById(id)
       .orElseThrow(() -> new ResponseStatusException(

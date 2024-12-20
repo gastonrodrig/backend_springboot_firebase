@@ -1,6 +1,6 @@
 package com.gato.multi.services;
 
-import com.gato.multi.dtos.Propietario.PropietarioCreateDTO;
+import com.gato.multi.dtos.Propietario.PropietarioCreateDto;
 import com.gato.multi.models.Propietario;
 import com.gato.multi.repositories.PropietarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +17,7 @@ public class PropietarioService {
   private PropietarioRepository propietarioRepository;
   
   // Crear un propietario
-  public Propietario create(PropietarioCreateDTO dto) {
+  public Propietario create(PropietarioCreateDto dto) {
     Propietario propietario = new Propietario(
       dto.getNombre(),
       dto.getTelefono(),
@@ -39,7 +39,7 @@ public class PropietarioService {
   }
   
   // Actualizar un propietario
-  public Propietario update(String id, PropietarioCreateDTO dto) {
+  public Propietario update(String id, PropietarioCreateDto dto) {
     Propietario propietario = propietarioRepository.findById(id)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Propietario no encontrado con ID: " + id));
     

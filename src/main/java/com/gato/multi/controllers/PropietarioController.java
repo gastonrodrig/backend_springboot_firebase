@@ -1,6 +1,7 @@
 package com.gato.multi.controllers;
 
 import com.gato.multi.dtos.Propietario.PropietarioCreateDto;
+import com.gato.multi.dtos.Propietario.PropietarioUpdateDto;
 import com.gato.multi.models.Propietario;
 import com.gato.multi.services.PropietarioService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,7 +40,7 @@ public class PropietarioController {
   
   @Operation(summary = "Actualiza un propietario")
   @PutMapping("/{id}")
-  public ResponseEntity<Propietario> update(@PathVariable("id") String id, @RequestBody PropietarioCreateDto dto) {
+  public ResponseEntity<Propietario> update(@PathVariable("id") String id, @RequestBody PropietarioUpdateDto dto) {
     return ResponseEntity.ok(propietarioService.update(id, dto));
   }
   

@@ -40,7 +40,7 @@ public class GatoService {
     String imageUrl = null;
     if (file != null && !file.isEmpty()) {
       try {
-        imageUrl = supabaseService.uploadImage("Gato", file);
+        imageUrl = supabaseService.uploadImage("prueba", file);
       } catch (IOException e) {
         throw new RuntimeException("Error subiendo la imagen a Supabase: " + e.getMessage(), e);
       }

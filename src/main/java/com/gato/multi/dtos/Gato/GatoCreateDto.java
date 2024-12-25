@@ -1,7 +1,6 @@
 package com.gato.multi.dtos.Gato;
 
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.data.mongodb.core.mapping.MongoId;
 
 public class GatoCreateDto {
   @NotBlank
@@ -10,7 +9,6 @@ public class GatoCreateDto {
   @NotBlank
   private String tamanio;
   
-  @MongoId
   @NotBlank
   private String propietario_id;
   

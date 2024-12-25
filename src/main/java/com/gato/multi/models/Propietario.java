@@ -1,21 +1,12 @@
 package com.gato.multi.models;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import com.gato.multi.interfaces.HasId;
 
-@Document(collection = "Propietario")
-public class Propietario {
-  @Id
-  @JsonProperty("_id")
+public class Propietario implements HasId {
   private String id;
-  
   private String nombre;
-  
   private String telefono;
-  
   private String email;
-  
   private String direccion;
   
   // Constructores
@@ -28,15 +19,18 @@ public class Propietario {
     this.direccion = direccion;
   }
   
-  // Getters y Setters
+  // Interfaz HasId
+  @Override
   public String getId() {
     return id;
   }
   
+  @Override
   public void setId(String id) {
     this.id = id;
   }
   
+  // Getters y setters
   public String getNombre() {
     return nombre;
   }

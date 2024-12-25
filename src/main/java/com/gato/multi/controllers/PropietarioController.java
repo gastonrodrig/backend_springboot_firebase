@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @Tag(name = "Propietarios")
@@ -46,7 +47,8 @@ public class PropietarioController {
   
   @Operation(summary = "Elimina un propietario")
   @DeleteMapping("/{id}")
-  public ResponseEntity<Propietario> delete(@PathVariable("id") String id) {
-    return ResponseEntity.ok(propietarioService.delete(id));
+  public ResponseEntity<Map<String, Boolean>> delete(@PathVariable("id") String id) {
+    boolean success = propietarioService.delete(id);
+    return ResponseEntity.ok(Map.of("success", success));
   }
 }

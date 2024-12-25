@@ -4,16 +4,10 @@ import com.gato.multi.dtos.Gato.GatoCreateDto;
 import com.gato.multi.dtos.Gato.GatoUpdateDto;
 import com.gato.multi.models.Gato;
 import com.gato.multi.models.Multimedia;
-import com.gato.multi.models.Propietario;
-import com.gato.multi.repositories.GatoRepository;
-import com.gato.multi.repositories.MultimediaRepository;
-import com.gato.multi.repositories.PropietarioRepository;
-import com.gato.multi.services.Supabase.SupabaseService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import com.gato.multi.services.Firebase.FirebaseStorageService;
+import com.gato.multi.utils.FirestoreUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,125 +15,113 @@ import java.util.List;
 @Service
 public class GatoService {
   
-  @Autowired
-  private GatoRepository gatoRepository;
-  @Autowired
-  private PropietarioRepository propietarioRepository;
-  @Autowired
-  private MultimediaRepository multimediaRepository;
-  @Autowired
-  private SupabaseService supabaseService;
+  private static final String COLLECTION_NAME = "Gato";
+  private static final String MULTIMEDIA_COLLECTION = "Multimedia";
+  private static final String PROPIETARIO_COLLECTION = "Propietario";
   
+  private final FirebaseStorageService firebaseStorageService;
+  
+  public GatoService(FirebaseStorageService firebaseStorageService) {
+    this.firebaseStorageService = firebaseStorageService;
+  }
+  
+  // Crear un gato
   public Gato create(GatoCreateDto dto, MultipartFile file) {
-    // Validar propietario
-    Propietario propietario = propietarioRepository.findById(dto.getPropietario_id())
-      .orElseThrow(() -> new ResponseStatusException(
-        HttpStatus.NOT_FOUND, "Propietario no encontrado con ID: " + dto.getPropietario_id()));
+    // Validar la existencia del propietario
+    FirestoreUtils.validateDocumentExists(PROPIETARIO_COLLECTION, dto.getPropietario_id());
     
-    // Subir la imagen a Supabase
-    String imageUrl = null;
+    // Subir la imagen y registrar la multimedia (si existe)
+    String multimediaId = null;
     if (file != null && !file.isEmpty()) {
       try {
-        imageUrl = supabaseService.uploadImage("prueba", file);
+        String imageUrl = firebaseStorageService.uploadFile("Gato", file);
+        Multimedia multimedia = new Multimedia(file.getOriginalFilename(), file.getContentType(), imageUrl);
+        multimediaId = FirestoreUtils.saveDocumentWithGeneratedId(MULTIMEDIA_COLLECTION, multimedia);
       } catch (IOException e) {
-        throw new RuntimeException("Error subiendo la imagen a Supabase: " + e.getMessage(), e);
+        throw new RuntimeException("Error subiendo la imagen a Firebase Storage: " + e.getMessage(), e);
       }
-    }
-    
-    // Crear registro en Multimedia
-    Multimedia multimedia = null;
-    if (imageUrl != null) {
-      multimedia = new Multimedia(file.getOriginalFilename(), file.getContentType(), imageUrl);
-      multimediaRepository.save(multimedia);
     }
     
     // Crear el objeto Gato
     Gato gato = new Gato();
     gato.setNombre(dto.getNombre());
     gato.setTamano(dto.getTamanio());
-    gato.setPropietario(propietario);
-    gato.setMultimedia(multimedia);
+    gato.setPropietario(dto.getPropietario_id());
+    gato.setMultimedia(multimediaId);
     
-    return gatoRepository.save(gato);
+    String gatoId = FirestoreUtils.saveDocumentWithGeneratedId(COLLECTION_NAME, gato);
+    gato.setId(gatoId); // Asignar el ID generado al objeto
+    
+    return gato;
   }
   
   // Obtener todos los gatos
   public List<Gato> getAll() {
-    return gatoRepository.findAll();
+    return FirestoreUtils.fetchAllDocuments(COLLECTION_NAME, Gato.class);
   }
   
-  // Obtener un gato por su ID
+  // Obtener un gato por ID
   public Gato getOne(String id) {
-    return gatoRepository.findById(id)
-      .orElseThrow(() -> new ResponseStatusException(
-        HttpStatus.NOT_FOUND, "Gato no encontrado con ID: " + id));
+    return FirestoreUtils.fetchDocument(COLLECTION_NAME, id, Gato.class);
   }
   
   // Actualizar un gato
   public Gato update(String id, GatoUpdateDto dto, MultipartFile newFile) {
-    // Buscar el gato existente
-    Gato gato = gatoRepository.findById(id)
-      .orElseThrow(() -> new ResponseStatusException(
-        HttpStatus.NOT_FOUND, "Gato no encontrado con ID: " + id));
+    // Obtener el gato existente
+    Gato existingGato = getOne(id);
     
-    // Buscar al propietario
-    Propietario propietario = propietarioRepository.findById(dto.getPropietario_id())
-      .orElseThrow(() -> new ResponseStatusException(
-        HttpStatus.NOT_FOUND, "Propietario no encontrado con ID: " + dto.getPropietario_id()));
+    // Validar la existencia del propietario
+    FirestoreUtils.validateDocumentExists(PROPIETARIO_COLLECTION, dto.getPropietario_id());
     
-    // Si hay multimedia asociada, eliminarla
-    if (gato.getMultimedia() != null) {
-      try {
-        supabaseService.deleteImage(gato.getMultimedia().getUrl());
-        multimediaRepository.deleteById(gato.getMultimedia().getId());
-      } catch (IOException e) {
-        throw new RuntimeException("Error eliminando multimedia existente: " + e.getMessage());
-      }
-    }
-    
-    // Subir nueva multimedia si se proporciona un archivo
+    // Manejar la multimedia si hay un nuevo archivo
+    String newMultimediaId = existingGato.getMultimedia();
     if (newFile != null && !newFile.isEmpty()) {
       try {
-        String newImageUrl = supabaseService.uploadImage("Gato", newFile);
+        // Eliminar la multimedia anterior si existe
+        if (existingGato.getMultimedia() != null) {
+          Multimedia oldMultimedia = FirestoreUtils.fetchDocument(MULTIMEDIA_COLLECTION, existingGato.getMultimedia(), Multimedia.class);
+          firebaseStorageService.deleteFile(oldMultimedia.getUrl());
+          FirestoreUtils.deleteDocument(MULTIMEDIA_COLLECTION, existingGato.getMultimedia());
+        }
+        
+        // Subir nueva multimedia
+        String newImageUrl = firebaseStorageService.uploadFile(COLLECTION_NAME, newFile);
         Multimedia newMultimedia = new Multimedia(newFile.getOriginalFilename(), newFile.getContentType(), newImageUrl);
-        multimediaRepository.save(newMultimedia);
-        gato.setMultimedia(newMultimedia);
+        newMultimediaId = FirestoreUtils.saveDocumentWithGeneratedId(MULTIMEDIA_COLLECTION, newMultimedia);
       } catch (IOException e) {
-        throw new RuntimeException("Error subiendo nueva multimedia: " + e.getMessage());
+        throw new RuntimeException("Error manejando la nueva multimedia: " + e.getMessage(), e);
       }
     }
     
-    // Actualizar los datos del gato
-    gato.setNombre(dto.getNombre());
-    gato.setTamano(dto.getTamanio());
-    gato.setPropietario(propietario);
-    // Nota: multimedia no se toca
+    // Actualizar datos del gato
+    existingGato.setNombre(dto.getNombre());
+    existingGato.setTamano(dto.getTamanio());
+    existingGato.setPropietario(dto.getPropietario_id());
+    existingGato.setMultimedia(newMultimediaId);
     
-    return gatoRepository.save(gato);
+    // Actualizar documento en Firestore con el mismo ID
+    FirestoreUtils.updateDocument(COLLECTION_NAME, id, existingGato);
+    
+    return existingGato;
   }
   
   // Eliminar un gato
   public boolean delete(String id) {
-    // Buscar el gato por ID
-    Gato gato = gatoRepository.findById(id)
-      .orElseThrow(() -> new ResponseStatusException(
-        HttpStatus.NOT_FOUND, "Gato no encontrado con ID: " + id));
+    Gato gato = getOne(id);
     
-    // Si el gato tiene multimedia, se elimina
-    if (gato.getMultimedia() != null && gato.getMultimedia().getUrl() != null) {
+    // Eliminar multimedia asociada
+    if (gato.getMultimedia() != null) {
       try {
-        String multimediaUrl = gato.getMultimedia().getUrl();
-        supabaseService.deleteImage(multimediaUrl); // Elimina de Supabase
-        multimediaRepository.deleteById(gato.getMultimedia().getId()); // Elimina de MongoDB
+        Multimedia multimedia = FirestoreUtils.fetchDocument(MULTIMEDIA_COLLECTION, gato.getMultimedia(), Multimedia.class);
+        firebaseStorageService.deleteFile(multimedia.getUrl());
+        FirestoreUtils.deleteDocument(MULTIMEDIA_COLLECTION, gato.getMultimedia());
       } catch (IOException e) {
-        throw new RuntimeException("Error eliminando multimedia asociada: " + e.getMessage());
+        throw new RuntimeException("Error eliminando multimedia asociada: " + e.getMessage(), e);
       }
     }
     
     // Eliminar el gato
-    gatoRepository.deleteById(id);
-    
-    // Retornar respuesta de éxito
+    FirestoreUtils.deleteDocument(COLLECTION_NAME, id);
     return true;
   }
 }

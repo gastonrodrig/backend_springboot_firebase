@@ -1,19 +1,11 @@
 package com.gato.multi.models;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import com.gato.multi.interfaces.HasId;
 
-@Document(collection = "Multimedia")
-public class Multimedia {
-  @Id
-  @JsonProperty("_id")
+public class Multimedia implements HasId {
   private String id;
-  
   private String nombre;
-  
   private String tipo;
-  
   private String url;
   
   // Constructores
@@ -25,15 +17,18 @@ public class Multimedia {
     this.url = url;
   }
   
-  // Getters y Setters
+  // Interfaz HasId
+  @Override
   public String getId() {
     return id;
   }
   
+  @Override
   public void setId(String id) {
     this.id = id;
   }
   
+  // Getters y Setters
   public String getNombre() {
     return nombre;
   }
@@ -58,3 +53,4 @@ public class Multimedia {
     this.url = url;
   }
 }
+

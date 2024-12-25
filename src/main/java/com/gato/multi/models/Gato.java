@@ -1,45 +1,36 @@
 package com.gato.multi.models;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.DBRef;
-import org.springframework.data.mongodb.core.mapping.Document;
+import com.gato.multi.interfaces.HasId;
 
-@Document(collection = "Gato")
-public class Gato {
-  @Id
-  @JsonProperty("_id")
+public class Gato implements HasId {
   private String id;
-  
   private String nombre;
-  
   private String tamano;
-  
-  @DBRef
-  private Multimedia multimedia;
-  
-  @DBRef
-  private Propietario propietario;
+  private String multimedia; // ID de la colección Multimedia
+  private String propietario; // ID de la colección Propietario
   
   // Constructores
   public Gato() {}
   
-  public Gato(String nombre, String tamano, Multimedia multimedia, Propietario propietario) {
+  public Gato(String nombre, String tamano, String multimedia, String propietario) {
     this.nombre = nombre;
     this.tamano = tamano;
     this.multimedia = multimedia;
     this.propietario = propietario;
   }
   
-  // Getters y Setters
+  // Interfaz HasId
+  @Override
   public String getId() {
     return id;
   }
   
+  @Override
   public void setId(String id) {
     this.id = id;
   }
   
+  // Getters y Setters
   public String getNombre() {
     return nombre;
   }
@@ -56,19 +47,19 @@ public class Gato {
     this.tamano = tamano;
   }
   
-  public Multimedia getMultimedia() {
+  public String getMultimedia() {
     return multimedia;
   }
   
-  public void setMultimedia(Multimedia multimedia) {
+  public void setMultimedia(String multimedia) {
     this.multimedia = multimedia;
   }
   
-  public Propietario getPropietario() {
+  public String getPropietario() {
     return propietario;
   }
   
-  public void setPropietario(Propietario propietario) {
+  public void setPropietario(String propietario) {
     this.propietario = propietario;
   }
 }
